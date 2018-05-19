@@ -37,7 +37,7 @@ sig Transaction {
 	arb: set Transaction
 }{
 	// po is total
-	#e > 1 => e in po.e + po[e]
+	all e1, e2 : e | e1!=e2 => e1->e2 in po or e2->e1 in po
 
 	// po is antisymmetric
 	no po & ~po
@@ -46,8 +46,7 @@ sig Transaction {
 	no iden & po
 
 	// po only contains events from e
-	HEvent[po] in e
-	HEvent.po in e
+	po in e->e
 
 	// vis is a subset of arb
 	vis in arb
@@ -67,7 +66,7 @@ fact visibilityIsAcyclic {
 fact arbIsTotalOrder {
 	no (iden & arb)
 	no (arb & ~arb)
-	#Transaction >1 => (Transaction in arb.Transaction + arb[Transaction])
+	all t1, t2 : Transaction | t1!=t2 => t1->t2 in arb or t2->t1 in arb
 }
 
 // To reduce orphaned object
@@ -100,6 +99,6 @@ pred show() {
 	some Transaction
 }
 
-run show 
+// run show 
 
-// check noUnrepeatableReads
+check noUnrepeatableReads
