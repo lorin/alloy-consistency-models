@@ -19,6 +19,7 @@ sig HEvent {
 }
 
 
+
 sig REvent, WEvent extends HEvent {}
 
 fact ReadsAreReadsAndWritesAreWrites {
@@ -31,13 +32,13 @@ fact OnlyReadsAndWrites {
 }
 
 sig Transaction {
-	e : some HEvent,
+	E : some HEvent,
 	po: HEvent -> HEvent,
 	vis: set Transaction,
 	arb: set Transaction
 }{
 	// po is total
-	all e1, e2 : e | e1!=e2 => e1->e2 in po or e2->e1 in po
+	all e1, e2 : E | e1!=e2 => e1->e2 in po or e2->e1 in po
 
 	// po is antisymmetric
 	no po & ~po
@@ -46,15 +47,20 @@ sig Transaction {
 	no iden & po
 
 	// po only contains events from e
-	po in e->e
+	po in E->E
 
 	// vis is a subset of arb
 	vis in arb
 }
 
+fact INT {
+	// all T : Transaction |
+		
+}
+
 
 fact eventsBelongToExactlyOneTransaction {
-	all ev : HEvent | #(e.ev)=1
+	all ev : HEvent | #(E.ev)=1
 }
 
 
@@ -85,12 +91,12 @@ it will read the same value in both cases
 */
 assert noUnrepeatableReads {
 all t : Transaction | 
-	all r1,r2 : t.e & REvent |
+	all r1,r2 : t.E & REvent |
 		// if same object is being read and r1 comes before r2
 		((r1.op.x = r2.op.x) and 
      (r1->r2 in t.po) and
 			// and no write after r1 and before r2
-		 (no w : t.e & WEvent | (w.op.x = r1.op.x and ({r1->w} + {w->r2}) in t.po)))
+		 (no w : t.E & WEvent | (w.op.x = r1.op.x and ({r1->w} + {w->r2}) in t.po)))
 		// then they will read the same value
 		=> 	r1.op.n = r2.op.n	
 }
