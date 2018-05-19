@@ -37,7 +37,7 @@ sig Transaction {
 	arb: set Transaction
 }{
 	// po is total
-	e in po.e + po[e]
+	#e > 1 => e in po.e + po[e]
 
 	// po is antisymmetric
 	no po & ~po
@@ -55,7 +55,7 @@ sig Transaction {
 
 
 fact eventsBelongToExactlyOneTransaction {
-	all ev : HEvent| #(e.ev)=1
+	all ev : HEvent | #(e.ev)=1
 }
 
 
@@ -63,13 +63,12 @@ fact visibilityIsAcyclic {
 	all t : Transaction | t not in t.^vis
 }
 
-/*
+
 fact arbIsTotalOrder {
-	no iden & arb
-	no arb & ~arb
-	Transaction in arb.Transaction + arb[Transaction]
+	no (iden & arb)
+	no (arb & ~arb)
+	#Transaction >1 => (Transaction in arb.Transaction + arb[Transaction])
 }
-*/
 
 // To reduce orphaned object
 fact AllOpsAreAssociatedWithHistoryEvents {
