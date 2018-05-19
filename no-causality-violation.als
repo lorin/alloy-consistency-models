@@ -53,6 +53,10 @@ sig Transaction {
 	vis in arb
 }
 
+fact eventsOnlyBelongToOneTransaction {
+	all t : Transaction | t.e.~e in t
+}
+
 fact visibilityIsAcyclic {
 	all t : Transaction | t not in t.^vis
 }
@@ -81,14 +85,18 @@ assert noUnrepeatableReads {
 all t : Transaction | 
 	all r1,r2 : t.e & REvent |
 		// if same object is being read and r1 comes before r2
-		(r1.op.x = r2.op.x and r1->r2 in t.po 
+		((r1.op.x = r2.op.x) and 
+     (r1->r2 in t.po) and
 			// and no write after r1 and before r2
-			and no w : t.e & WEvent | w.op.x = r1.op.x and ({r1->w} + {w->r2}) in t.po) =>
+		 (no w : t.e & WEvent | (w.op.x = r1.op.x and ({r1->w} + {w->r2}) in t.po)))
 		// then they will read the same value
-		r1.op.n = r2.op.n
+		=> 	r1.op.n = r2.op.n	
 }
 
-pred show() {}
+pred show() {
+	some Transaction
+}
 
-//run show for 5
-check noUnrepeatableReads
+run show 
+
+// check noUnrepeatableReads
