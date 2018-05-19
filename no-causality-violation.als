@@ -53,19 +53,23 @@ sig Transaction {
 	vis in arb
 }
 
-fact eventsOnlyBelongToOneTransaction {
-	all t : Transaction | t.e.~e in t
+
+fact eventsBelongToExactlyOneTransaction {
+	all ev : HEvent| #(e.ev)=1
 }
+
 
 fact visibilityIsAcyclic {
 	all t : Transaction | t not in t.^vis
 }
 
+/*
 fact arbIsTotalOrder {
 	no iden & arb
 	no arb & ~arb
 	Transaction in arb.Transaction + arb[Transaction]
 }
+*/
 
 // To reduce orphaned object
 fact AllOpsAreAssociatedWithHistoryEvents {
