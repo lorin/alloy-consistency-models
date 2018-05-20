@@ -69,24 +69,10 @@ fact INT {
 		all e : t.E |
 			all x : Obj |
 				all n : Int |
-					let A = ~(t.po).e & HEventObj[x] |
-					let maxE = {u: A | all v : A | v=u or v->u in t.po } |
+					let maxE = max[t.po, ~(t.po).e & HEventObj[x]] | 
 						(e.op in Read and e.op.obj=x and e.op.val=n and x in (~(t.po).e).op.obj)
 						=> (maxE.op.obj=x and maxE.op.val=n)
 }
-
-/*
-fact INT {
-	all T : Transaction |
-		all e : T.E |
-			all x : Obj |
-				all n : Int |
-					let maxE = max[t.po, ~(t.po).e & HEventObj[x]] |
-						(e.op in Read and e.op.obj=x and e.op.val=n and x in (~(t.po).e).op.obj)
-						=> (maxE.op.obj=x and maxE.op.val=n)
-}
-
-*/
 
 
 fact eventsBelongToExactlyOneTransaction {
@@ -135,6 +121,6 @@ pred show() {
 	some Transaction
 }
 
-// run show 
+run show 
 
-check noUnrepeatableReads
+// check noUnrepeatableReads
