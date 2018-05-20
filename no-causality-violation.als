@@ -150,7 +150,7 @@ fact NoConflict {
 If a transaction reads an object twice without writing to it in-between,
 it will read the same value in both cases
 */
-assert noUnrepeatableReads {
+assert noNonRepeatableReads {
 all t : Transaction | 
 	all r1,r2 : t.E & REvent |
 		// if same object is being read and r1 comes before r2

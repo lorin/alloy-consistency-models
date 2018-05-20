@@ -108,5 +108,55 @@ sig Transaction {
 ```
 
 
+## Repeatable reads 
+
+Here's how the authors *repeatable reads*, from Section 3, p61:
+
+>  if a transaction reads an object twice without writing to it in-between, it will read the same value in both cases.
+
+In Alloy, we can assert all reads are repeatable:
+
+```alloy
+assert repeatableReads {
+all t : Transaction | 
+	all r1,r2 : t.E & REvent |
+		// if same object is being read and r1 comes before r2
+		((r1.op.obj = r2.op.obj) and 
+     (r1->r2 in t.po) and
+			// and no write after r1 and before r2
+		 (no w : t.E & WEvent | (w.op.obj = r1.op.obj and ({r1->w} + {w->r2}) in t.po)))
+		// then they will read the same value
+		=> 	r1.op.val = r2.op.val
+}
+```
+
+If we check this assertion, Alloy will find a counterexample:
+
+```alloy
+check repeatableReads
+```
+
+![repeatable reads counterexample](repeatable-reads.png)
+
+Here are the theme changes I made:
+
+```
+EventId -> Show: Off
+obj -> Shows as arcs: Off
+obj -> Show as attribute: On
+val -> Show as arcs: Off
+val -> Show as attribute: Off
+Obj -> Show: Off
+po -> Show as attribute: On
+po -> Show as arcs: Off
+```
+
+## Internal consistency
+
+If we enforce the *internal consistency axiom*, then this ensures repeatable
+reads.
+
+
+
 [1]: http://drops.dagstuhl.de/opus/volltexte/2015/5375/pdf/15.pdf 
 [2]: https://github.com/AlloyTools/org.alloytools.alloy/wiki/5.0.0-Change-List#markdown-syntax
