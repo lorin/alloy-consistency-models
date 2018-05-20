@@ -138,7 +138,7 @@ check repeatableReads
 
 ![repeatable reads counterexample](repeatable-reads.png)
 
-Here are the theme changes I made:
+Note: Here are the theme changes I made to render this:
 
 ```
 EventId -> Show: Off
@@ -151,11 +151,24 @@ po -> Show as attribute: On
 po -> Show as arcs: Off
 ```
 
+You can see by the value of po that the ordering was: 
+
+1. REvent0
+1. REvent2
+1. REvent1
+
+REvent0 and Revent1 both read -8, but REvent2 read 7, and there was no
+intervening write.
+
+
 ## Internal consistency
 
 If we enforce the *internal consistency axiom*, then this ensures repeatable
 reads.
 
+From Section 3, Figure 2, page 63:
+
+> ∀(E, po) ∈ H. ∀e ∈ E. ∀x, n.(e = (_, read(x, n)) ∧ (po−1 (e) ∩ HEventx 6= ∅)) =⇒ maxpo(po−1 (e) ∩ HEventx) = (_, _(x, n)) 
 
 
 [1]: http://drops.dagstuhl.de/opus/volltexte/2015/5375/pdf/15.pdf 
