@@ -69,6 +69,25 @@ sig WEvent extends HEvent {
 }
 ```
 
+> We let WEventx = {(ι, write(x, n)) | ι ∈ EventId, n ∈ Z}, define the set REventx of read events similarly, and
+> let HEventx = REventx ∪ WEventx.
+
+WEventx, REventX and HEventX are all parameterized by the object x. To model
+this in Alloy, we're going to define functions that takes x as an argument. 
+
+Note: it turns out we don't ever need to use REventx, so we won't define it.
+
+```alloy
+fun HEventObj[x : Obj] : HEvent {
+	{e : HEvent | e.op.obj = x }
+}
+
+fun WEventObj[x : Obj] : WEvent {
+	HEventObj[x] & WEvent
+}
+```
+
+
 ## Transactions
 
 From Section 2, page 60:
@@ -166,10 +185,56 @@ intervening write.
 If we enforce the *internal consistency axiom*, then this ensures repeatable
 reads.
 
-From Section 3, Figure 2, page 63:
+The axiom, called INT, is defined in Section 3, Figure 2, page 63:
 
 > ∀(E, po) ∈ H. ∀e ∈ E. ∀x, n.(e = (_, read(x, n)) ∧ (po−1 (e) ∩ HEventx ≠ ∅)) ⇒  maxpo(po−1 (e) ∩ HEventx) = (_, _(x, n)) 
 
+First, we need to define maxpo, which is the last operation specified by the relation
+po. 
+
+From page 61:
+
+> we let maxR(A) be the element u ∈ A such that ∀v∈A.v=u ∨ (v,u)∈R; if A=∅, then maxR(A) is undefined. 
+
+We'll need min later, so we'll define them both here: 
+
+```alloy
+fun max[R : HEvent->HEvent, A : set HEvent] : HEvent {
+	// the element u \in A s.t.
+	// all v in A. v = u or (v,u) in R
+	{u : A | all v : A | v=u or v->u in R }
+}
+
+fun min[R : HEvent->HEvent, A : set HEvent] : HEvent {
+	{u : A | all v : A | v=u or u->v in R }
+}
+```
+
+We can now define INT. Note that we use Transaction to specify the set of
+transactions in the universe, where the paper uses "H".
+
+```alloy
+fact INT {
+	all t : Transaction |
+		all e : t.E |
+			all x : Obj |
+				all n : Int |
+					let maxE = max[t.po, ~(t.po).e & HEventObj[x]] | 
+						(e.op in Read and e.op.obj=x and e.op.val=n and x in (~(t.po).e).op.obj)
+						=> (maxE.op.obj=x and maxE.op.val=n)
+}
+```
+
+With the INT axiom specified as a fact, if we check our assertion, Alloy tells
+us:
+
+```
+Executing "Check repeatableReads"
+   Solver=minisatprover(jni) Bitwidth=4 MaxSeq=4 SkolemDepth=1 Symmetry=20
+   7404 vars. 159 primary vars. 22398 clauses. 157ms.
+   No counterexample found. Assertion may be valid. 194ms.
+   Core. contains 12 top-level formulas. 19ms.
+```
 
 [1]: http://drops.dagstuhl.de/opus/volltexte/2015/5375/pdf/15.pdf 
 [2]: https://github.com/AlloyTools/org.alloytools.alloy/wiki/5.0.0-Change-List#markdown-syntax
