@@ -1,7 +1,6 @@
 sig EventId {}
 
-sig Obj {
-}
+sig Obj {}
 
 abstract sig Op {
 	obj: Obj,
