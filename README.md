@@ -27,8 +27,8 @@ In Alloy:
 sig Obj {}
 
 abstract sig Op {
-	obj: Obj,
-	val: Int
+    obj: Obj,
+    val: Int
 }
 
 sig Read,Write extends Op {}
@@ -51,21 +51,21 @@ reads and writes.
 sig EventId {}
 
 abstract sig HEvent {
-	id: EventId,
-	op: Op,
+    id: EventId,
+    op: Op,
 }{
-	// event ids are distinct
-	all h : HEvent | (h.@id = id) => h = this
+    // event ids are distinct
+    all h : HEvent | (h.@id = id) => h = this
 }
 
 sig REvent extends HEvent {
 }{
-	op in Read
+    op in Read
 }
 
 sig WEvent extends HEvent {
 }{
-	op in Write
+    op in Write
 }
 ```
 
@@ -104,25 +104,25 @@ We'll create a Transaction model in Alloy that captures both definitions.
 
 ```alloy
 sig Transaction {
-	E : some HEvent,
-	po: HEvent -> HEvent,
-	VIS: set Transaction,
-	AR: set Transaction
+    E : some HEvent,
+    po: HEvent -> HEvent,
+    VIS: set Transaction,
+    AR: set Transaction
 }{
-	// po is total
-	all e1, e2 : E | e1!=e2 => (e1->e2 in po or e2->e1 in po)
+    // po is total
+    all e1, e2 : E | e1!=e2 => (e1->e2 in po or e2->e1 in po)
 
-	// po is antisymmetric
-	no po & ~po
-	
-	// po is irreflexive
-	no iden & po
+    // po is antisymmetric
+    no po & ~po
 
-	// po only contains events from e
-	po in E->E
+    // po is irreflexive
+    no iden & po
 
-	// VIS is a subset of AR
-	VIS in AR
+    // po only contains events from e
+    po in E->E
+
+    // VIS is a subset of AR
+    VIS in AR
 }
 ```
 
@@ -137,15 +137,13 @@ In Alloy, we can assert all reads are repeatable:
 
 ```alloy
 assert repeatableReads {
-all t : Transaction | 
-	all r1,r2 : t.E & REvent |
-		// if same object is being read and r1 comes before r2
-		((r1.op.obj = r2.op.obj) and 
-     (r1->r2 in t.po) and
-			// and no write after r1 and before r2
-		 (no w : t.E & WEvent | (w.op.obj = r1.op.obj and ({r1->w} + {w->r2}) in t.po)))
-		// then they will read the same value
-		=> 	r1.op.val = r2.op.val
+ all t : Transaction, r1,r2 : t.E & REvent |
+  // if same object is being read and r1 comes before r2
+  ((r1.op.obj = r2.op.obj) and (r1->r2 in t.po) and 
+  // and no write after r1 and before r2
+   (no w : t.E & WEvent | (w.op.obj = r1.op.obj and ({r1->w} + {w->r2}) in t.po)))
+  // then they will read the same value
+  => r1.op.val = r2.op.val
 }
 ```
 
