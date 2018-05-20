@@ -192,11 +192,11 @@ The axiom, called INT, is defined in Section 3, Figure 2, page 63:
 First, we need to define maxpo, which is the last operation specified by the relation
 po. 
 
-From page 61:
+The function maxR, from some relation R, is defined on page 61:
 
-> we let maxR(A) be the element u ∈ A such that ∀v∈A.v=u ∨ (v,u)∈R; if A=∅, then maxR(A) is undefined. 
+> let maxR(A) be the element u ∈ A such that ∀v∈A.v=u ∨ (v,u)∈R; if A=∅, then maxR(A) is undefined. 
 
-We'll need min later, so we'll define them both here: 
+We'll also need min later, so we'll define them both here: 
 
 ```alloy
 fun max[R : HEvent->HEvent, A : set HEvent] : HEvent {
@@ -210,10 +210,18 @@ fun min[R : HEvent->HEvent, A : set HEvent] : HEvent {
 }
 ```
 
-We can now define INT. Note that we use Transaction to specify the set of
-transactions in the universe, where the paper uses "H".
+We can now define INT, as well as some helper methods that it uses. Note that
+we use Transaction to specify the set of transactions in the universe, where
+the paper uses "H".
 
 ```alloy
+fact INT {
+ all t : Transaction, e : t.E, x : Obj, n : Int |
+  // previous op that accessed x
+  let prevOpX = max[t.po, ~(t.po).e & HEventObj[x]].op | 
+   (reads[e.op, x, n] and some ~(t.po).e & HEventObj[x]) => accesses[prevOpX, x, n]
+}
+
 // True if op reads n from x or writes n to x
 pred accesses[op : Op, x : Obj, n : Int] {
     op.obj=x and op.val=n
@@ -221,16 +229,9 @@ pred accesses[op : Op, x : Obj, n : Int] {
 
 // True if op reads n from x
 pred reads[op : Op, x : Obj, n : Int] {
-    e.op in Read and accesses[e.op, x, n]
-}
-
-fact INT {
- all t : Transaction, e : t.E, x : Obj, n : Int |
-  let maxE = max[t.po, ~(t.po).e & HEventObj[x]] | 
-   (reads[e.op, x, n] and some ~(t.po).e & HEventObj[x]) => accesses[maxE.op, x, n]
+    op in Read and accesses[op, x, n]
 }
 ```
-
 With the INT axiom specified as a fact, if we check our assertion, Alloy tells
 us:
 
