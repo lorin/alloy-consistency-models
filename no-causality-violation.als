@@ -3,14 +3,14 @@ sig EventId {}
 sig Obj {
 }
 
-sig Op {
+abstract sig Op {
 	obj: Obj,
 	val: Int
 }
 
 sig Read,Write extends Op {}
 
-sig HEvent {
+abstract sig HEvent {
 	id: EventId,
 	op: Op,
 }{
@@ -18,19 +18,16 @@ sig HEvent {
 	all h : HEvent | (h.@id = id) => h = this
 }
 
-
-
-sig REvent, WEvent extends HEvent {}
-
-fact ReadsAreReadsAndWritesAreWrites {
-	REvent.op in Read
-	WEvent.op in Write
+sig REvent extends HEvent {
+}{
+	op in Read
 }
 
-fact OnlyReadsAndWrites {
-	HEvent in REvent + WEvent
-	Op in Read + Write
+sig WEvent extends HEvent {
+}{
+	op in Write
 }
+
 
 sig Transaction {
 	E : some HEvent,
@@ -86,8 +83,7 @@ pred TReads[t : Transaction, x : Obj, n : Int] {
 }
 
 fun maxAR[T: set Transaction] : Transaction {
-	{t : T | all s : T | s=t or s->t in AR}
-	
+	{t : T | all s : T | s=t or s->t in AR}	
 }
 
 fact INT {
@@ -119,6 +115,10 @@ fact visibilityIsAcyclic {
 	all t : Transaction | t not in t.^VIS
 }
 
+fact ARIsAcyclic {
+	all t : Transaction | t not in t.^AR
+}
+
 
 fact ArIsTotalOrder {
 	no (iden & AR)
@@ -133,6 +133,17 @@ fact AllOpsAreAssociatedWithHistoryEvents {
 
 fact AllObjectsAreAssociatedWithOperations {
 	Obj in Op.obj
+}
+
+fact TransVis {
+	^VIS in VIS
+}
+
+
+fact NoConflict {
+	all t,s : Transaction | 
+		(some x : Obj | (t != s and (some m : Int | TWrites[t, x, m]) and (some m : Int | TWrites[s, x, m])))
+		 => t->s in VIS or s->t in VIS
 }
 
 
@@ -152,13 +163,42 @@ all t : Transaction |
 		=> 	r1.op.val = r2.op.val
 }
 
+assert causalConsistency {
+	all t : Transaction |
+		all x : Obj |
+			all n : Int |
+				TReads[t, x, n] => 
+					let WritesX = {s : Transaction | (some m : Int | TWrites[s, x, m]) } |
+					(no (^VIS.t & WritesX) and n=0) or TWrites[(maxAR[^VIS.t & WritesX]), x, n]
+}
+
+assert prefixConsistency {
+	some R : Transaction -> Transaction |
+		(no R & iden) and 
+		(no R & ~R) and
+		(all s,t : Transaction | s->t in R or t->s in R or s=t) and
+		(VIS in R) and
+		all t : Transaction |
+			all x : Obj |
+				all n : Int |
+					TReads[t, x, n] => 
+						let WritesX = {s : Transaction | (some m : Int | TWrites[s, x, m]) } |
+						(no (R.t & WritesX) and n=0) or TWrites[{t : R.t & WritesX | all s : R.t & WritesX | s=t or s->t in R},x, n]
+}
+
+
+
+
+
 pred show() {
 	some Read
 	some Write
 	#Transaction > 1
 }
 
-run show 
-// check firstReadMustReadZero
-
 // check noUnrepeatableReads
+// check causalConsistency
+check prefixConsistency
+
+// run show 
+
