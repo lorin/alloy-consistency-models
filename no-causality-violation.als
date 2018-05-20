@@ -29,16 +29,17 @@ fact ReadsAreReadsAndWritesAreWrites {
 
 fact OnlyReadsAndWrites {
 	HEvent in REvent + WEvent
+	Op in Read + Write
 }
 
 sig Transaction {
 	E : some HEvent,
 	po: HEvent -> HEvent,
-	vis: set Transaction,
-	arb: set Transaction
+	VIS: set Transaction,
+	AR: set Transaction
 }{
 	// po is total
-	all e1, e2 : E | e1!=e2 => e1->e2 in po or e2->e1 in po
+	all e1, e2 : E | e1!=e2 => (e1->e2 in po or e2->e1 in po)
 
 	// po is antisymmetric
 	no po & ~po
@@ -49,8 +50,8 @@ sig Transaction {
 	// po only contains events from e
 	po in E->E
 
-	// vis is a subset of arb
-	vis in arb
+	// vis is a subset of ar
+	VIS in AR
 }
 
 fun max[R : HEvent->HEvent, A : set HEvent] : HEvent {
@@ -59,10 +60,35 @@ fun max[R : HEvent->HEvent, A : set HEvent] : HEvent {
 	{u : A | all v : A | v=u or v->u in R }
 }
 
+fun min[R : HEvent->HEvent, A : set HEvent] : HEvent {
+	{u : A | all v : A | v=u or u->v in R }
+}
+
+
 fun HEventObj[x : Obj] : HEvent {
 	{e : HEvent | e.op.obj = x }
 }
 
+fun WEventObj[x : Obj] : WEvent {
+	HEventObj[x] & WEvent
+}
+
+// In transaction t, the last write to object x was value n
+pred TWrites[t : Transaction, x : Obj, n : Int] {
+	let lastWriteX = max[t.po, t.E & WEventObj[x]].op |
+		lastWriteX in Write and lastWriteX.obj=x and lastWriteX.val=n
+}
+
+// In transaction t, the first access to object x was a read of value n
+pred TReads[t : Transaction, x : Obj, n : Int] {
+	let firstOpX = min[t.po, t.E & HEventObj[x]].op |
+		firstOpX in Read and firstOpX.obj=x and firstOpX.val=n
+}
+
+fun maxAR[T: set Transaction] : Transaction {
+	{t : T | all s : T | s=t or s->t in AR}
+	
+}
 
 fact INT {
 	all t : Transaction |
@@ -74,6 +100,15 @@ fact INT {
 						=> (maxE.op.obj=x and maxE.op.val=n)
 }
 
+fact EXT {
+	all t : Transaction |
+		all x : Obj |
+			all n : Int |
+				TReads[t, x, n] => 
+					let WritesX = {s : Transaction | (some m : Int | TWrites[s, x, m]) } |
+					(no (VIS.t & WritesX) and n=0) or TWrites[(maxAR[VIS.t & WritesX]), x, n]
+}
+
 
 fact eventsBelongToExactlyOneTransaction {
 	all ev : HEvent | #(E.ev)=1
@@ -81,14 +116,14 @@ fact eventsBelongToExactlyOneTransaction {
 
 
 fact visibilityIsAcyclic {
-	all t : Transaction | t not in t.^vis
+	all t : Transaction | t not in t.^VIS
 }
 
 
-fact arbIsTotalOrder {
-	no (iden & arb)
-	no (arb & ~arb)
-	all t1, t2 : Transaction | t1!=t2 => t1->t2 in arb or t2->t1 in arb
+fact ArIsTotalOrder {
+	no (iden & AR)
+	no (AR & ~AR)
+	all t1, t2 : Transaction | t1!=t2 => t1->t2 in AR or t2->t1 in AR
 }
 
 // To reduce orphaned object
@@ -118,9 +153,12 @@ all t : Transaction |
 }
 
 pred show() {
-	some Transaction
+	some Read
+	some Write
+	#Transaction > 1
 }
 
 run show 
+// check firstReadMustReadZero
 
 // check noUnrepeatableReads
