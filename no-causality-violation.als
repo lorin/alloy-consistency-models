@@ -4,8 +4,8 @@ sig Obj {
 }
 
 sig Op {
-	x: Obj,
-	n: Int
+	obj: Obj,
+	val: Int
 }
 
 sig Read,Write extends Op {}
@@ -53,10 +53,40 @@ sig Transaction {
 	vis in arb
 }
 
-fact INT {
-	// all T : Transaction |
-		
+fun max[R : HEvent->HEvent, A : set HEvent] : HEvent {
+	// the element u \in A s.t.
+	// all v in A. v = u or (v,u) in R
+	{u : A | all v : A | v=u or v->u in R }
 }
+
+fun HEventObj[x : Obj] : HEvent {
+	{e : HEvent | e.op.obj = x }
+}
+
+
+fact INT {
+	all t : Transaction |
+		all e : t.E |
+			all x : Obj |
+				all n : Int |
+					let A = ~(t.po).e & HEventObj[x] |
+					let maxE = {u: A | all v : A | v=u or v->u in t.po } |
+						(e.op in Read and e.op.obj=x and e.op.val=n and x in (~(t.po).e).op.obj)
+						=> (maxE.op.obj=x and maxE.op.val=n)
+}
+
+/*
+fact INT {
+	all T : Transaction |
+		all e : T.E |
+			all x : Obj |
+				all n : Int |
+					let maxE = max[t.po, ~(t.po).e & HEventObj[x]] |
+						(e.op in Read and e.op.obj=x and e.op.val=n and x in (~(t.po).e).op.obj)
+						=> (maxE.op.obj=x and maxE.op.val=n)
+}
+
+*/
 
 
 fact eventsBelongToExactlyOneTransaction {
@@ -81,7 +111,7 @@ fact AllOpsAreAssociatedWithHistoryEvents {
 }
 
 fact AllObjectsAreAssociatedWithOperations {
-	Obj in Op.x
+	Obj in Op.obj
 }
 
 
@@ -93,12 +123,12 @@ assert noUnrepeatableReads {
 all t : Transaction | 
 	all r1,r2 : t.E & REvent |
 		// if same object is being read and r1 comes before r2
-		((r1.op.x = r2.op.x) and 
+		((r1.op.obj = r2.op.obj) and 
      (r1->r2 in t.po) and
 			// and no write after r1 and before r2
-		 (no w : t.E & WEvent | (w.op.x = r1.op.x and ({r1->w} + {w->r2}) in t.po)))
+		 (no w : t.E & WEvent | (w.op.obj = r1.op.obj and ({r1->w} + {w->r2}) in t.po)))
 		// then they will read the same value
-		=> 	r1.op.n = r2.op.n	
+		=> 	r1.op.val = r2.op.val
 }
 
 pred show() {
