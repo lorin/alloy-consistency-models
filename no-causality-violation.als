@@ -1,5 +1,3 @@
-sig EventId {}
-
 sig Obj {}
 
 abstract sig Op {
@@ -8,6 +6,8 @@ abstract sig Op {
 }
 
 sig Read,Write extends Op {}
+
+sig EventId {}
 
 abstract sig HEvent {
 	id: EventId,
