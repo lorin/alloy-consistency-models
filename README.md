@@ -219,10 +219,15 @@ pred accesses[op : Op, x : Obj, n : Int] {
     op.obj=x and op.val=n
 }
 
+// True if op reads n from x
+pred reads[op : Op, x : Obj, n : Int] {
+    e.op in Read and accesses[e.op, x, n]
+}
+
 fact INT {
  all t : Transaction, e : t.E, x : Obj, n : Int |
   let maxE = max[t.po, ~(t.po).e & HEventObj[x]] | 
-   (e.op in Read and accesses[e.op, x, n] and x in (~(t.po).e).op.obj) => accesses[maxE.op, x, n]
+   (reads[e.op, x, n] and some ~(t.po).e & HEventObj[x]) => accesses[maxE.op, x, n]
 }
 ```
 
