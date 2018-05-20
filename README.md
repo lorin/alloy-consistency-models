@@ -168,7 +168,7 @@ reads.
 
 From Section 3, Figure 2, page 63:
 
-> ∀(E, po) ∈ H. ∀e ∈ E. ∀x, n.(e = (_, read(x, n)) ∧ (po−1 (e) ∩ HEventx 6= ∅)) =⇒ maxpo(po−1 (e) ∩ HEventx) = (_, _(x, n)) 
+> ∀(E, po) ∈ H. ∀e ∈ E. ∀x, n.(e = (_, read(x, n)) ∧ (po−1 (e) ∩ HEventx ≠ ∅)) ⇒  maxpo(po−1 (e) ∩ HEventx) = (_, _(x, n)) 
 
 
 [1]: http://drops.dagstuhl.de/opus/volltexte/2015/5375/pdf/15.pdf 
