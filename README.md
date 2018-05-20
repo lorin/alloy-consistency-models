@@ -77,8 +77,7 @@ From Section 2, page 60:
 > non-empty set of events with distinct identifiers, and the program order *po* is a total order
 > over E.
  
-> ** Definition 2.** An abstract execution is a triple A = (H, VIS, AR) where:
->
+> **Definition 2.** An abstract execution is a triple A = (H, VIS, AR) where:
 > - visibility VIS ⊆ H × H is a prefix-finite, acyclic relation; and
 > - arbitration AR ⊆ H × H is a prefix-finite, total order such that AR ⊇ VIS.
 
