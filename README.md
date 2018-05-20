@@ -11,6 +11,9 @@ models of tranactional databases.
 This approach lends itself well to modeling with Alloy, so I thought it would
 be useful Alloy practice to translate the specifications into Alloy.
 
+Note that this file itself can be loaded directly into Alloy thanks to [Markdown
+support in Alloy 5][2].
+
 ## Reads and writes
 
 The paper models reads and write operations like this (from Section 2, page
@@ -106,3 +109,4 @@ sig Transaction {
 
 
 [1]: http://drops.dagstuhl.de/opus/volltexte/2015/5375/pdf/15.pdf 
+[2]: https://github.com/AlloyTools/org.alloytools.alloy/wiki/5.0.0-Change-List#markdown-syntax
