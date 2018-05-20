@@ -215,13 +215,13 @@ transactions in the universe, where the paper uses "H".
 
 ```alloy
 fact INT {
-	all t : Transaction |
-		all e : t.E |
-			all x : Obj |
-				all n : Int |
-					let maxE = max[t.po, ~(t.po).e & HEventObj[x]] | 
-						(e.op in Read and e.op.obj=x and e.op.val=n and x in (~(t.po).e).op.obj)
-						=> (maxE.op.obj=x and maxE.op.val=n)
+ all t : Transaction |
+  all e : t.E |
+   all x : Obj |
+    all n : Int |
+     let maxE = max[t.po, ~(t.po).e & HEventObj[x]] | 
+      (e.op in Read and e.op.obj=x and e.op.val=n and x in (~(t.po).e).op.obj)
+      => (maxE.op.obj=x and maxE.op.val=n)
 }
 ```
 
