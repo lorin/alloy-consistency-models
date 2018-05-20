@@ -214,14 +214,15 @@ We can now define INT. Note that we use Transaction to specify the set of
 transactions in the universe, where the paper uses "H".
 
 ```alloy
+// True if op reads n from x or writes n to x
+pred accesses[op : Op, x : Obj, n : Int] {
+    op.obj=x and op.val=n
+}
+
 fact INT {
- all t : Transaction |
-  all e : t.E |
-   all x : Obj |
-    all n : Int |
-     let maxE = max[t.po, ~(t.po).e & HEventObj[x]] | 
-      (e.op in Read and e.op.obj=x and e.op.val=n and x in (~(t.po).e).op.obj)
-      => (maxE.op.obj=x and maxE.op.val=n)
+ all t : Transaction, e : t.E, x : Obj, n : Int |
+  let maxE = max[t.po, ~(t.po).e & HEventObj[x]] | 
+   (e.op in Read and accesses[e.op, x, n] and x in (~(t.po).e).op.obj) => accesses[maxE.op, x, n]
 }
 ```
 
