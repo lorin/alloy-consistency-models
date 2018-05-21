@@ -361,8 +361,15 @@ fun maxAR[T: set Transaction] : Transaction {
 ```
 
 Once this fact is included, Alloy can no longer find a counterexample for the
-noDirtyReads assertion.
+noDirtyReads assertion:
 
+```
+Executing "Check noDirtyReads"
+   Solver=minisatprover(jni) Bitwidth=4 MaxSeq=4 SkolemDepth=1 Symmetry=20
+   13103 vars. 159 primary vars. 40078 clauses. 266ms.
+   No counterexample found. Assertion may be valid. 61ms.
+   Core. contains 17 top-level formulas. 14ms.
+```
 
 [1]: http://drops.dagstuhl.de/opus/volltexte/2015/5375/pdf/15.pdf 
 [2]: https://github.com/AlloyTools/org.alloytools.alloy/wiki/5.0.0-Change-List#markdown-syntax
