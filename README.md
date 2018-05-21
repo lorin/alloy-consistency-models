@@ -75,8 +75,6 @@ sig WEvent extends HEvent {
 WEventx, REventX and HEventX are all parameterized by the object x. To model
 this in Alloy, we're going to define functions that takes x as an argument. 
 
-Note: it turns out we don't ever need to use REventx, so we won't define it.
-
 ```alloy
 fun HEventObj[x : Obj] : HEvent {
 	{e : HEvent | e.op.obj = x }
@@ -85,6 +83,11 @@ fun HEventObj[x : Obj] : HEvent {
 fun WEventObj[x : Obj] : WEvent {
 	HEventObj[x] & WEvent
 }
+
+fun REventObj[x : Obj] : REvent {
+	HEventObj[x] & REvent
+}
+
 ```
 
 
@@ -124,6 +127,24 @@ sig Transaction {
     // VIS is a subset of AR
     VIS in AR
 }
+
+fact eventsBelongToOnlyOneTransaction {
+	all e : HEvent | one E.e
+}
+
+fact VisIsAcyclic {
+	all t : Transaction | t not in t.^VIS
+}
+
+fact ArIsAcyclic {
+	all t : Transaction | t not in t.^AR
+}
+
+fact ArIsTotalOrder {
+	no (iden & AR)
+	no (AR & ~AR)
+	all t1, t2 : Transaction | t1!=t2 => t1->t2 in AR or t2->t1 in AR
+}
 ```
 
 
@@ -150,7 +171,7 @@ assert repeatableReads {
 If we check this assertion, Alloy will find a counterexample:
 
 ```alloy
-check repeatableReads
+// check repeatableReads
 ```
 
 ![repeatable reads counterexample](repeatable-reads.png)
@@ -240,6 +261,72 @@ Executing "Check repeatableReads"
    No counterexample found. Assertion may be valid. 194ms.
    Core. contains 12 top-level formulas. 19ms.
 ```
+
+## Dirty reads 
+
+The authors define the absence of *dirty reads* in Section 3, p61:
+
+> a committed transaction cannot read a value written by an aborted or an
+> ongoing transaction (which are not present in abstract
+> executions), and a transaction cannot read a value that was overwritten by the
+> transaction that wrote it.
+
+```alloy
+
+fun committedWrite[t : Transaction, x : Obj] : set Int {
+    max[t.po, t.E & WEventObj[x]].op.val
+}
+
+fun overwrittenWrites[t : Transaction, x : Obj] : set Int {
+    (t.E & WEventObj[x]).op.val - committedWrite[t, x]
+}
+
+
+assert noDirtyReads {
+/*
+For all objects x, there is no transaction where:
+- there are no writes to x
+- the read from x yields a dirty value
+
+- Committed values: last write to x in a transaction
+- All values: all values ever written to x
+- Dirty values: committed - all
+*/
+all x : Obj | no t : Transaction |
+ // no writes to x in t
+ (no t.E & WEventObj[x]) and 
+ // a read in t corresponds to a dirty write in x
+ (some s : Transaction |  some (t.E & REventObj[x]).op.val & overwrittenWrites[s, x])
+}
+
+check noDirtyReads
+```
+
+Checking this assertion, Alloy finds a counterexample:
+
+![no dirty reads counterexample](no-dirty-reads.png)
+
+## External Consistency
+
+
+The authors define the *external consistency axiom*, EXT, in Section 3, page 61:
+
+> If a read is not preceded in the program order by an operation on the same object,
+> then its value is determined in terms of writes by other transactions using the *external consistency axiom* EXT.
+
+EXT is formally defined on page 63, Figure 2:
+
+> ∀T ∈ H. ∀x, n. T ⊢ Read x : n ⇒
+> ((VIS−1 (T) ∩ {S | S ⊢  Write x : _} = ∅ ∧ n = 0) ∨
+> maxAR(VIS−1 (T) ∩ {S | S ⊢ Write x : _}) ⊢  Write x : n)
+
+This definition uses two new definitions:
+
+> let T ⊢ Write x : n if T writes to x and the last value written is n: maxpo(E ∩ WEventx) = (_, write(x, n)). 
+
+> let T ⊢ Read x : n if T makes an external read from x, i.e., one before writing to x, and n is the value returned by the first such read: minpo(E ∩ HEventx) = (_, read(x, n))
+
+
 
 [1]: http://drops.dagstuhl.de/opus/volltexte/2015/5375/pdf/15.pdf 
 [2]: https://github.com/AlloyTools/org.alloytools.alloy/wiki/5.0.0-Change-List#markdown-syntax
