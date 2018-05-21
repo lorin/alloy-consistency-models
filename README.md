@@ -4,24 +4,23 @@ title: Consistency models
 
 # Reading "A Framework for Transactional Consistency Models with Atomic Visibility" with Alloy
 
-[A Framework for Transactional Consistency Models with Atomic Visibility][1] by Cerone, Bernardi and
-Gostman uses an axiomatic specification approach to reason about consistency
-models of tranactional databases.
+In the paper [A Framework for Transactional Consistency Models with Atomic Visibility][1] by Cerone, Bernardi and
+Gostman, the authors propose a formal approach for reasoning about consistency models of transactional databases.
 
-This approach lends itself well to modeling with Alloy, so I thought it would
-be useful Alloy practice to translate the specifications into Alloy.
+This paper seemed like a good opportunity to practice working with Alloy, and
+so I used Alloy to encode some of the specifications in the paper. 
 
-Note that this file itself can be loaded directly into Alloy thanks to [Markdown
+Note that this README.md file contains the specifications and can be loaded directly into Alloy thanks to [Markdown
 support in Alloy 5][2].
 
 ## Reads and writes
 
-The paper models reads and write operations like this (from Section 2, page
-60):
+In the paper, databases read and write integers to objects.  The paper models
+reads and write operations like this (from Section 2, page 60):
 
 > Op = {read(x, n), write(x, n) | x ∈ Obj, n ∈ Z}
 
-In Alloy:
+Here's how I modeled the operations in Alloy:
 
 ```alloy
 sig Obj {}
@@ -34,8 +33,7 @@ abstract sig Op {
 sig Read,Write extends Op {}
 ```
 
-Note: we don't really need to model values as integers, but I chose to do it
-anyway.
+Note: we don't really need to model the values as integers, but I chose to do it anyway.
 
 ## Event histories
 
@@ -44,8 +42,8 @@ From Section 2, page 60:
 > [W]e denote operation invocations using history events of the form (ι, o), where ι is an identifier from a countably infinite
 > set EventId and o ∈ Op
 
-In Alloy, we'll call a history event *HEvent*. We'll also distinguish between
-reads and writes.
+In Alloy, we'll call a history event *HEvent*. We'll also distinguish between read and write operations, as well as read and write events.
+We'll use those distinctions later.
 
 ```alloy
 sig EventId {}
@@ -87,9 +85,7 @@ fun WEventObj[x : Obj] : WEvent {
 fun REventObj[x : Obj] : REvent {
 	HEventObj[x] & REvent
 }
-
 ```
-
 
 ## Transactions
 
