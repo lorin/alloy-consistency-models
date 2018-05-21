@@ -75,15 +75,15 @@ this in Alloy, we're going to define functions that takes x as an argument.
 
 ```alloy
 fun HEventObj[x : Obj] : HEvent {
-	{e : HEvent | e.op.obj = x }
+    {e : HEvent | e.op.obj = x }
 }
 
 fun WEventObj[x : Obj] : WEvent {
-	HEventObj[x] & WEvent
+    HEventObj[x] & WEvent
 }
 
 fun REventObj[x : Obj] : REvent {
-	HEventObj[x] & REvent
+    HEventObj[x] & REvent
 }
 ```
 
@@ -146,7 +146,7 @@ fact ArIsTotalOrder {
 
 ## Repeatable reads 
 
-Here's how the authors *repeatable reads*, from Section 3, p61:
+Here's how the authors define *repeatable reads*, from Section 3, p61:
 
 >  if a transaction reads an object twice without writing to it in-between, it will read the same value in both cases.
 
