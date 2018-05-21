@@ -125,21 +125,21 @@ sig Transaction {
 }
 
 fact eventsBelongToOnlyOneTransaction {
-	all e : HEvent | one E.e
+    all e : HEvent | one E.e
 }
 
 fact VisIsAcyclic {
-	all t : Transaction | t not in t.^VIS
+    all t : Transaction | t not in t.^VIS
 }
 
 fact ArIsAcyclic {
-	all t : Transaction | t not in t.^AR
+    all t : Transaction | t not in t.^AR
 }
 
 fact ArIsTotalOrder {
-	no (iden & AR)
-	no (AR & ~AR)
-	all t1, t2 : Transaction | t1!=t2 => t1->t2 in AR or t2->t1 in AR
+    no (iden & AR)
+    no (AR & ~AR)
+    all t1, t2 : Transaction | t1!=t2 => t1->t2 in AR or t2->t1 in AR
 }
 ```
 
@@ -215,13 +215,13 @@ We'll also need min later, so we'll define them both here:
 
 ```alloy
 fun max[R : HEvent->HEvent, A : set HEvent] : HEvent {
-	// the element u \in A s.t.
-	// all v in A. v = u or (v,u) in R
-	{u : A | all v : A | v=u or v->u in R }
+    // the element u \in A s.t.
+    // all v in A. v = u or (v,u) in R
+    {u : A | all v : A | v=u or v->u in R }
 }
 
 fun min[R : HEvent->HEvent, A : set HEvent] : HEvent {
-	{u : A | all v : A | v=u or u->v in R }
+    {u : A | all v : A | v=u or u->v in R }
 }
 ```
 
@@ -330,29 +330,29 @@ In Alloy:
 
 ```alloy
 fact EXT {
-	all t : Transaction |
-		all x : Obj |
-			all n : Int |
-				TReads[t, x, n] => 
-					let WritesX = {s : Transaction | (some m : Int | TWrites[s, x, m]) } |
-					(no (VIS.t & WritesX) and n=0) or TWrites[(maxAR[VIS.t & WritesX]), x, n]
+    all t : Transaction |
+        all x : Obj |
+            all n : Int |
+                TReads[t, x, n] => 
+                    let WritesX = {s : Transaction | (some m : Int | TWrites[s, x, m]) } |
+                    (no (VIS.t & WritesX) and n=0) or TWrites[(maxAR[VIS.t & WritesX]), x, n]
 }
 
 // In transaction t, the last write to object x was value n
 pred TWrites[t : Transaction, x : Obj, n : Int] {
-	let lastWriteX = max[t.po, t.E & WEventObj[x]].op |
-		lastWriteX in Write and lastWriteX.obj=x and lastWriteX.val=n
+    let lastWriteX = max[t.po, t.E & WEventObj[x]].op |
+        lastWriteX in Write and lastWriteX.obj=x and lastWriteX.val=n
 }
 
 // In transaction t, the first access to object x was a read of value n
 pred TReads[t : Transaction, x : Obj, n : Int] {
-	let firstOpX = min[t.po, t.E & HEventObj[x]].op |
-		firstOpX in Read and firstOpX.obj=x and firstOpX.val=n
+    let firstOpX = min[t.po, t.E & HEventObj[x]].op |
+        firstOpX in Read and firstOpX.obj=x and firstOpX.val=n
 }
 
 // The last transaction to occur in the ordering given by AR
 fun maxAR[T: set Transaction] : Transaction {
-	{t : T | all s : T | s=t or s->t in AR}	
+    {t : T | all s : T | s=t or s->t in AR} 
 }
 ```
 
