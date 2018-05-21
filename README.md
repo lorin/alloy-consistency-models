@@ -371,5 +371,31 @@ Executing "Check noDirtyReads"
    Core. contains 17 top-level formulas. 14ms.
 ```
 
+## Strong consistency models
+
+Specifying the axioms for the stronger consistency models in Alloy is straightforward, for example:
+
+```alloy
+fact TransVis {
+    ^VIS in VIS
+}
+
+fact NoConflict {
+    all t,s : Transaction | 
+        (some x : Obj | (t != s and (some m : Int | TWrites[t, x, m]) and (some m : Int | TWrites[s, x, m])))
+         => t->s in VIS or s->t in VIS
+}
+```
+
+However, getting Alloy to identify anomalies via assertions is trickier. For
+some of them, you need to check that there's no possible ordering of the
+transactions that supports the semantics of causality.
+
+This requires quantifying over a relation (ordering among transactions), which
+Alloy can't do, because Alloy is first-order. [Alloy*][3] can quantify over
+relations, but I haven't tried it out here.
+
+
 [1]: http://drops.dagstuhl.de/opus/volltexte/2015/5375/pdf/15.pdf 
 [2]: https://github.com/AlloyTools/org.alloytools.alloy/wiki/5.0.0-Change-List#markdown-syntax
+[3]: https://aleksandarmilicevic.github.io/hola/

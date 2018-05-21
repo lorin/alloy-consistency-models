@@ -145,13 +145,11 @@ fact TransVis {
 	^VIS in VIS
 }
 
-
 fact NoConflict {
 	all t,s : Transaction | 
 		(some x : Obj | (t != s and (some m : Int | TWrites[t, x, m]) and (some m : Int | TWrites[s, x, m])))
 		 => t->s in VIS or s->t in VIS
 }
-
 
 /*
 If a transaction reads an object twice without writing to it in-between,
