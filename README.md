@@ -296,7 +296,9 @@ all x : Obj | no t : Transaction |
  // no writes to x in t
  (no t.E & WEventObj[x]) and 
  // a read in t corresponds to a dirty write in x
- (some s : Transaction |  some (t.E & REventObj[x]).op.val & overwrittenWrites[s, x])
+ // we special-case 0 because a 0 read can legitimately occur from transactions that go
+ // before any other ones commit a write
+ (some s : Transaction |  some ((t.E & REventObj[x]).op.val & overwrittenWrites[s, x]) - {0})
 }
 
 check noDirtyReads
@@ -306,10 +308,12 @@ Checking this assertion, Alloy finds a counterexample:
 
 ![no dirty reads counterexample](no-dirty-reads.png)
 
+In this counterexample, Transaction1 writes 4 and then overwrites -3 to Obj1,
+but Transaction0 reads 4.
+
 ## External Consistency
 
-
-The authors define the *external consistency axiom*, EXT, in Section 3, page 61:
+To prevent dirty reads, the authors introduce the *external consistency axiom*, EXT, in Section 3, page 61:
 
 > If a read is not preceded in the program order by an operation on the same object,
 > then its value is determined in terms of writes by other transactions using the *external consistency axiom* EXT.
@@ -326,6 +330,38 @@ This definition uses two new definitions:
 
 > let T ⊢ Read x : n if T makes an external read from x, i.e., one before writing to x, and n is the value returned by the first such read: minpo(E ∩ HEventx) = (_, read(x, n))
 
+In Alloy:
+
+```alloy
+fact EXT {
+	all t : Transaction |
+		all x : Obj |
+			all n : Int |
+				TReads[t, x, n] => 
+					let WritesX = {s : Transaction | (some m : Int | TWrites[s, x, m]) } |
+					(no (VIS.t & WritesX) and n=0) or TWrites[(maxAR[VIS.t & WritesX]), x, n]
+}
+
+// In transaction t, the last write to object x was value n
+pred TWrites[t : Transaction, x : Obj, n : Int] {
+	let lastWriteX = max[t.po, t.E & WEventObj[x]].op |
+		lastWriteX in Write and lastWriteX.obj=x and lastWriteX.val=n
+}
+
+// In transaction t, the first access to object x was a read of value n
+pred TReads[t : Transaction, x : Obj, n : Int] {
+	let firstOpX = min[t.po, t.E & HEventObj[x]].op |
+		firstOpX in Read and firstOpX.obj=x and firstOpX.val=n
+}
+
+// The last transaction to occur in the ordering given by AR
+fun maxAR[T: set Transaction] : Transaction {
+	{t : T | all s : T | s=t or s->t in AR}	
+}
+```
+
+Once this fact is included, Alloy can no longer find a counterexample for the
+noDirtyReads assertion.
 
 
 [1]: http://drops.dagstuhl.de/opus/volltexte/2015/5375/pdf/15.pdf 
