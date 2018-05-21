@@ -330,12 +330,10 @@ In Alloy:
 
 ```alloy
 fact EXT {
-    all t : Transaction |
-        all x : Obj |
-            all n : Int |
-                TReads[t, x, n] => 
-                    let WritesX = {s : Transaction | (some m : Int | TWrites[s, x, m]) } |
-                    (no (VIS.t & WritesX) and n=0) or TWrites[(maxAR[VIS.t & WritesX]), x, n]
+  all t : Transaction, x : Obj, n : Int |
+    TReads[t, x, n] => 
+        let WritesX = {s : Transaction | (some m : Int | TWrites[s, x, m]) } |
+        (no (VIS.t & WritesX) and n=0) or TWrites[(maxAR[VIS.t & WritesX]), x, n]
 }
 
 // In transaction t, the last write to object x was value n
