@@ -1,3 +1,10 @@
+/*
+
+NOTE: I wrote this file first, then wrote README.md. The README 
+is more recent, but is missing some modeling that is in here.
+
+*/
+
 sig Obj {}
 
 abstract sig Op {
@@ -184,9 +191,6 @@ assert prefixConsistency {
 						let WritesX = {s : Transaction | (some m : Int | TWrites[s, x, m]) } |
 						(no (R.t & WritesX) and n=0) or TWrites[{t : R.t & WritesX | all s : R.t & WritesX | s=t or s->t in R},x, n]
 }
-
-
-
 
 
 pred show() {
